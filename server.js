@@ -25,7 +25,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'static')));
 
 function homePage(req, res) {
-	var lang, code, customTest;
+	var lang, code, customTest, testCases = [];
 	function fcodeRead(err, data) {
 		if (err) {
 			throw err;
@@ -38,7 +38,13 @@ function homePage(req, res) {
 			throw err;
 		}
 		customTest = data;
-		new executer.spawn(lang, code, customTest, finishedExec);
+		var inputData = {
+			language: lang,
+			code: code,
+			customTest: customTest,
+			testCases: testCases
+		};
+		new executer.spawn(inputData, finishedExec);
 	}
 	function finishedExec(data) {
 		res.send(data);

@@ -1,13 +1,11 @@
 var child_proc = require('child_process'),
 	fs = require('fs');
 
-function spawn (lang, code, customTest, cback) {
-	var proc, path = "./users/", codefile = "code.cpp", testfiles = [],
+function spawn (inputData, cback) {
+	var proc,
+		path = "./user/",
+		codefile = "code.cpp",
 		execfile = "a.out";
-
-	function messageHandler(m) {
-
-	}
 
 	function forkReady () {
 		proc = child_proc.fork('./execution/sandbox.js', [], { silent: true });
@@ -18,20 +16,22 @@ function spawn (lang, code, customTest, cback) {
 		child_proc.exec(
 				'g++'.concat(' ', codefile, ' -o ', execfile),
 				{ cwd : path }, function (err, stdout, stderr) {
-					if (err) {
-						return cback(null);
-					}
 					if (stderr) {
 						return cback(stderr);
+					}
+					if (err) {
+						return cback(err);
 					}
 					cback("success");
 					//setImmediate(forkReady);
 				});
 	}
 
-	function getTests() {
-		testfiles.push("customTest");
-		fs.writeFile('./users/tests/' + testfiles[0], customTest, function(err) {
+	function customTestCaseStatus() {
+		if (!inputData.customTest) return setImmediate(compileReady);
+		inputData.testCases.push("customTest");
+		fs.writeFile(
+				path.concat('tests/', inputData.testCases[0]), inputData.customTest, function(err) {
 			if (err) {
 				return cback(null);
 			}
@@ -39,11 +39,11 @@ function spawn (lang, code, customTest, cback) {
 		});
 	}
 
-	fs.writeFile(path.concat(codefile), code, function(err) {
+	fs.writeFile(path.concat(codefile), inputData.code, function(err) {
 		if (err) {
 			return cback(null);
 		}
-		setImmediate(getTests);
+		setImmediate(customTestCaseStatus);
 	});
 }
 

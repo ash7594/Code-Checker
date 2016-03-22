@@ -1,15 +1,20 @@
 var child_proc = require('child_process'),
 	fs = require('fs');
+var sandbox = require('./sandbox');
 
 function spawn (inputData, cback) {
 	var proc,
 		path = "./user/",
 		codefile = "code.cpp",
-		execfile = "a.out";
+		execfile = "./a.out";
 
 	function forkReady () {
 		proc = child_proc.fork('./execution/sandbox.js', [], { silent: true });
 		proc.send({ lang: lang, execfile: execfile, testfiles: testfiles });
+	}
+
+	function executeReady() {
+		sandbox.executeTests(path, execfile, codefile, inputData.testCases, cback);
 	}
 
 	function compileReady() {
@@ -22,8 +27,8 @@ function spawn (inputData, cback) {
 					if (err) {
 						return cback(err);
 					}
-					cback("success");
-					//setImmediate(forkReady);
+					//cback("success");
+					setImmediate(executeReady);
 				});
 	}
 
